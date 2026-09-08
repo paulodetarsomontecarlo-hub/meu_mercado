@@ -10,10 +10,16 @@ const PADRAO_ITEM =
 
 const PADRAO_DESCONTO = /desconto[^0-9]*item\s*(\d+)[^0-9]*(\d+[.,]\d{2})/i
 
-function normalizarUnidade(un: string): Unidade {
-  const upper = un.toUpperCase()
-  if (upper === 'KG' || upper === 'L' || upper === 'PC') return upper as Unidade
-  return 'Un'
+const UNIDADES_POR_CODIGO: Record<string, Unidade> = {
+  KG: 'Kg',
+  L: 'L',
+  LT: 'L',
+  PC: 'Pc',
+  UN: 'Un',
+}
+
+export function normalizarUnidade(un: string): Unidade {
+  return UNIDADES_POR_CODIGO[un.toUpperCase()] ?? 'Un'
 }
 
 export function parseLinhasTexto(texto: string): { itens: RawItemLine[]; descontos: RawDiscountLine[] } {

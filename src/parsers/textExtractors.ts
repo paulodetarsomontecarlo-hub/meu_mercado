@@ -6,8 +6,14 @@ import type { FormaPagamento } from '../types'
 // limpo, extraído via pdfjs) e o parser de OCR de foto (texto ruidoso do Tesseract).
 
 export function extrairChaveAcesso(texto: string): string | null {
-  const soDigitos = texto.replace(/\D/g, ' ')
-  const candidatos = soDigitos.match(/\d{44}/g) ?? []
+  // A chave costuma ser impressa em grupos de 4 dígitos separados por espaço
+  // ("3526 0904 9720 ..."), então primeiro tentamos blocos "dígito+espaço" que
+  // somam 44 dígitos ao juntar; se não achar (chave sem espaçamento), caímos
+  // para procurar uma sequência de 44 dígitos corridos.
+  const candidatosComEspaco = (texto.match(/(?:\d[ \t]*){44}/g) ?? []).map((c) => c.replace(/\D/g, ''))
+  const candidatosCorridos = texto.replace(/\D/g, ' ').match(/\d{44}/g) ?? []
+  const candidatos = [...candidatosComEspaco, ...candidatosCorridos].filter((c) => c.length === 44)
+
   for (const candidato of candidatos) {
     if (decomporChave(candidato).valida) return candidato
   }

@@ -116,10 +116,19 @@ revisão — só a foto e o PDF trazem os itens automaticamente.
   rápido para compras repetidas na mesma loja; entre lojas diferentes (códigos
   internos diferentes para o mesmo produto) a comparação por nome ainda
   funciona, mas cada código precisa da própria correção na primeira vez.
-- **Parsers de PDF/foto usam regex heurísticos** para o layout de item
-  (`código descrição qtd un vl.unit vl.total`) porque não havia uma
-  Consulta Resumida real disponível para calibrar contra o layout exato de
-  cada estado/loja. Campos que não forem reconhecidos ficam em branco na
+- **O parser de PDF é calibrado contra uma Consulta Resumida real** da
+  Sefaz-SP (`src/parsers/__tests__/fixtures/nfce_oba_real.pdf`, coberta por
+  testes automatizados). Vale destacar um detalhe não óbvio desse template: o
+  texto extraído do PDF **não segue a ordem visual da página** — os valores do
+  resumo (qtd. de itens, total, desconto, valor pago, tributos) saem soltos e
+  sem rótulo logo no início do texto, e cada item ocupa 3-4 "linhas" (uma para
+  a descrição+código, outra para quantidade/unidade/valor unitário, e o total
+  numa linha à parte) em vez de uma linha só. O parser (`extrairItensSefaz` e
+  `extrairValoresCabecalho` em `src/parsers/pdfParser.ts`) lida com isso via
+  extração posicional dentro do bloco numérico e uma pequena máquina de
+  estados para os itens, em vez de um regex de linha única. Se o PDF não bater
+  com esse layout (outro estado/loja com um template bem diferente), cai para
+  um parser genérico linha a linha; campos não reconhecidos ficam em branco na
   revisão para preenchimento manual antes de salvar.
 - **Dinheiro em centavos**: todo valor monetário "de verdade" (o que saiu
   impresso na nota) é `number` inteiro em centavos. Os campos derivados
