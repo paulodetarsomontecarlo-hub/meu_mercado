@@ -37,8 +37,11 @@ storage) e recarregue.
 - **Histórico** — lista de notas filtrável por data/loja/categoria, com
   exportação CSV (`;`, vírgula decimal, para abrir direto no Excel PT-BR).
 - **Detalhe da nota** — dados da nota, chave de acesso decomposta (UF,
-  competência, CNPJ, modelo/série/número), tributos, e lista de itens com edição
-  inline que alimenta o dicionário de normalização/categorização.
+  competência, CNPJ, modelo/série/número), tributos, lista de itens com edição
+  inline que alimenta o dicionário de normalização/categorização, e exclusão da
+  nota (com confirmação) — remove a nota e seus itens, e limpa só o histórico de
+  preço daquela nota no dicionário de produtos, sem apagar o aprendizado de
+  nome/categoria do código.
 
 ## Como o parser foi estruturado
 

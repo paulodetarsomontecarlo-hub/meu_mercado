@@ -96,3 +96,24 @@ export async function salvarNota(
     return notaId
   })
 }
+
+// Remove a nota e seus itens. O histórico de preços dessa nota também é retirado
+// do dicionário de produtos, mas o produto em si (nome normalizado, categoria)
+// permanece — o aprendizado por código continua valendo para as próximas notas.
+export async function excluirNota(notaId: number): Promise<void> {
+  return db.transaction('rw', db.notas, db.itens, db.produtos, async () => {
+    const itens = await db.itens.where('nota_id').equals(notaId).toArray()
+
+    for (const item of itens) {
+      const produto = await db.produtos.get(item.codigo_produto)
+      if (produto) {
+        await db.produtos.update(item.codigo_produto, {
+          historico_precos: produto.historico_precos.filter((h) => h.nota_id !== notaId),
+        })
+      }
+    }
+
+    await db.itens.where('nota_id').equals(notaId).delete()
+    await db.notas.delete(notaId)
+  })
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { db } from '../db/schema'
 import { useItensDaNota, useNota } from '../lib/useDados'
 import { formatarBRL } from '../lib/money'
@@ -7,6 +7,7 @@ import { formatarDataHoraBR } from '../lib/date'
 import { precoPorKgOuL } from '../lib/analytics'
 import { aprenderCorrecaoDescricao } from '../lib/normalizer'
 import { aprenderCategoria } from '../lib/categorizer'
+import { excluirNota } from '../lib/receiptBuilder'
 import { decomporChave, formatarCNPJ } from '../parsers/chaveParser'
 import { CATEGORIAS } from '../types'
 import type { Item } from '../types'
@@ -14,12 +15,26 @@ import { BadgeCategoria, Card, CardTitulo, EstadoVazio } from '../components/ui'
 
 export function DetalheNota() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const notaId = id ? Number(id) : undefined
   const nota = useNota(notaId)
   const itens = useItensDaNota(notaId)
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
 
   if (nota === undefined) {
     return <EstadoVazio titulo="Nota não encontrada" descricao="Volte ao histórico e tente novamente." />
+  }
+
+  async function excluir() {
+    if (notaId === undefined) return
+    setExcluindo(true)
+    try {
+      await excluirNota(notaId)
+      navigate('/historico')
+    } finally {
+      setExcluindo(false)
+    }
   }
 
   const chaveDecomposta = nota.chave_acesso ? decomporChave(nota.chave_acesso) : null
@@ -89,6 +104,39 @@ export function DetalheNota() {
             <LinhaItem key={item.id} item={item} />
           ))}
         </div>
+      </Card>
+
+      <Card className="border-rose-200 dark:border-rose-900">
+        {confirmandoExclusao ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              Excluir esta nota e seus {itens.length} itens? Essa ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={excluir}
+                disabled={excluindo}
+                className="flex-1 rounded-lg bg-rose-600 py-2 text-sm font-medium text-white disabled:opacity-40"
+              >
+                {excluindo ? 'Excluindo…' : 'Sim, excluir'}
+              </button>
+              <button
+                onClick={() => setConfirmandoExclusao(false)}
+                disabled={excluindo}
+                className="flex-1 rounded-lg border border-slate-300 py-2 text-sm dark:border-slate-700"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmandoExclusao(true)}
+            className="w-full text-center text-sm font-medium text-rose-600 hover:underline dark:text-rose-400"
+          >
+            Excluir nota
+          </button>
+        )}
       </Card>
     </div>
   )
