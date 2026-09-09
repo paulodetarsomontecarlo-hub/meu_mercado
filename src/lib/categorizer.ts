@@ -2,6 +2,10 @@ import { db } from '../db/schema'
 import type { Categoria } from '../types'
 
 const REGRAS: [RegExp, Categoria][] = [
+  // Salgadinhos de pacote e marcas conhecidas entram antes de Hortifruti — sem
+  // isso "Batata Palha"/"Fandangos" cairiam em Hortifruti só por conterem
+  // "batata" ou nenhuma palavra-chave genérica de doces/snacks.
+  [/batata palha|batata chips|fandangos|cheetos|doritos|ruffles|torcida|baconzitos|elma chips|cebolitos|pringles/i, 'Doces e snacks'],
   [/tomate|banana|alface|cenoura|batata|cebola|laranja|mac[aã]|uva|verdura|legume|fruta|hortifruti|limão|abacate|couve|morango/i, 'Hortifruti'],
   [/mussarela|president|linguiça|calabresa|sadia|carne|frango|bovin[oa]|su[íi]n[oa]|frios|presunto|salame|bacon|peixe|file/i, 'Carnes e frios'],
   [/arroz|feij[aã]o|macarr[aã]o|farinha|a[çc][uú]car|[óo]leo|sal\b|molho|extrato|caf[eé]|tempero|massa/i, 'Mercearia'],
@@ -46,4 +50,24 @@ export async function aprenderCategoria(codigo: string, categoria: Categoria): P
       historico_precos: [],
     })
   }
+}
+
+// Categoriza um item digitado à mão na lista de compras, sem código de produto
+// (ainda não foi comprado). Primeiro tenta achar algo parecido no dicionário
+// aprendido pelas notas já lançadas; se não achar, cai nas mesmas regras por
+// palavra-chave usadas para itens de nota.
+export async function categorizarTextoLivre(texto: string): Promise<Categoria> {
+  const normalizado = texto.trim().toLowerCase()
+  if (!normalizado) return 'Outros'
+
+  if (normalizado.length >= 3) {
+    const produtos = await db.produtos.toArray()
+    const encontrado = produtos.find((p) => {
+      const nome = p.descricao_normalizada.toLowerCase()
+      return nome.length >= 3 && (nome.includes(normalizado) || normalizado.includes(nome))
+    })
+    if (encontrado) return encontrado.categoria
+  }
+
+  return categorizarPorPalavraChave(texto)
 }

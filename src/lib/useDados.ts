@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/schema'
 import type { ItemComNota } from './analytics'
-import type { Item, Nota } from '../types'
+import type { Item, ItemListaCompras, Mercado, Nota } from '../types'
 
 export function useNotas(): Nota[] {
   return useLiveQuery(() => db.notas.orderBy('data_hora').reverse().toArray(), [], []) ?? []
@@ -36,4 +36,19 @@ export function useNota(notaId: number | undefined): Nota | undefined {
     if (notaId === undefined) return undefined
     return db.notas.get(notaId)
   }, [notaId])
+}
+
+export function useMercados(): Mercado[] {
+  return useLiveQuery(() => db.mercados.orderBy('nome').toArray(), [], []) ?? []
+}
+
+export function useMercado(mercadoId: number | undefined): Mercado | undefined {
+  return useLiveQuery(async () => {
+    if (mercadoId === undefined) return undefined
+    return db.mercados.get(mercadoId)
+  }, [mercadoId])
+}
+
+export function useItensListaCompras(): ItemListaCompras[] {
+  return useLiveQuery(() => db.itensListaCompras.orderBy('criado_em').toArray(), [], []) ?? []
 }

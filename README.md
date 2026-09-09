@@ -42,6 +42,19 @@ storage) e recarregue.
   nota (com confirmação) — remove a nota e seus itens, e limpa só o histórico de
   preço daquela nota no dicionário de produtos, sem apagar o aprendizado de
   nome/categoria do código.
+- **Lista de compras** — digite os itens (sem código de produto ainda, então a
+  categoria é adivinhada pelo dicionário aprendido ou pelas mesmas regras por
+  palavra-chave dos itens de nota) e a lista agrupa por categoria. Escolhendo um
+  mercado cadastrado, os grupos saem ordenados pelo corredor mapeado pra aquele
+  mercado — assim "Batata Palha" e "Fandangos" caem os dois em "Doces e
+  snacks", e se esse mercado tiver "Doces e snacks → Corredor 1" mapeado, esse
+  grupo aparece primeiro na lista. Categorias sem corredor mapeado (ou sem
+  mercado selecionado) vão pro fim, em ordem alfabética. Dá pra marcar item
+  como comprado (risca o texto) e limpar os já comprados de uma vez.
+- **Mercados** — cadastro de mercados e, pra cada um, um corredor por
+  categoria (texto livre — "3", "3A", "Fundo" etc.). Usado só pela Lista de
+  compras; não tem relação com as lojas das notas fiscais (nome da loja na nota
+  e nome do mercado aqui são cadastros independentes).
 
 ## Como o parser foi estruturado
 
@@ -150,6 +163,23 @@ revisão — só a foto e o PDF trazem os itens automaticamente.
   deterministicamente (mesma seed sempre) a partir de um pool de produtos
   comuns de supermercado, já que o texto completo das quatro notas não foi
   fornecido — ver `src/seed/`.
+- **Item da lista de compras não tem código de produto** (você digitou o nome
+  antes de comprar, não veio de nota nenhuma), então a categoria é um palpite:
+  primeiro tenta achar algo parecido no dicionário aprendido pelas notas já
+  lançadas (`categorizarTextoLivre` em `src/lib/categorizer.ts`), senão cai nas
+  mesmas regras por palavra-chave. Corrigir a categoria de um item de nota
+  ensina o dicionário e melhora o palpite de itens parecidos na lista de
+  compras depois — mas não existe correção manual da categoria dentro da
+  própria lista de compras ainda (só reduzindo a categoria manualmente na nota
+  depois de comprado, se vier errado).
+- **Mercado (cadastro de corredores) é independente da loja da nota fiscal.**
+  São dois conceitos que não se cruzam por enquanto: o nome do mercado que você
+  cadastra em "Mercados" é livre, não precisa (nem tenta) casar com o
+  `nome_loja` que veio de uma NFC-e. Se um dia fizer sentido linkar os dois
+  (ex.: sugerir automaticamente o mercado certo pelo CNPJ), dá pra evoluir.
+- **Qual mercado está selecionado na lista de compras fica salvo só no
+  `localStorage`** desse navegador/aparelho (preferência de UI, não dado de
+  negócio) — os itens da lista em si ficam no IndexedDB, junto com o resto.
 
 ## Testes
 
@@ -164,3 +194,8 @@ cinco casos de teste do briefing contra o fixture de 07/09/2026:
 4. Água 5L (R$ 2,38/L) sinalizada como mais cara por litro que a de 1,5L
    (R$ 1,86/L) — sem assumir que o formato grande é mais barato.
 5. Ticket médio por item: R$ 7,34 (Assaí) e R$ 16,78 (Muffato).
+
+`src/lib/__tests__/listaCompras.test.ts` e `categorizer.test.ts` cobrem o
+agrupamento por corredor (inclusive o caso do enunciado: "Batata Palha" e
+"Fandangos" caindo juntos em Doces e snacks) e a categorização de texto livre
+digitado na lista de compras, sem código de produto.

@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const ABAS = [
   { to: '/', label: 'Dashboard', icon: '📊', fim: true },
   { to: '/adicionar', label: 'Adicionar', icon: '➕' },
+  { to: '/lista', label: 'Lista', icon: '📝' },
   { to: '/historico', label: 'Histórico', icon: '🧾' },
 ]
 

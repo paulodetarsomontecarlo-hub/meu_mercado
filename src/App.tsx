@@ -5,6 +5,8 @@ import { Dashboard } from './screens/Dashboard'
 import { AdicionarNota } from './screens/AdicionarNota'
 import { Historico } from './screens/Historico'
 import { DetalheNota } from './screens/DetalheNota'
+import { ListaCompras } from './screens/ListaCompras'
+import { Mercados } from './screens/Mercados'
 import { carregarSeedSeVazio } from './seed/seedLoader'
 
 export default function App() {
@@ -26,6 +28,8 @@ export default function App() {
           <Route path="adicionar" element={<AdicionarNota />} />
           <Route path="historico" element={<Historico />} />
           <Route path="nota/:id" element={<DetalheNota />} />
+          <Route path="lista" element={<ListaCompras />} />
+          <Route path="mercados" element={<Mercados />} />
         </Route>
       </Routes>
     </HashRouter>

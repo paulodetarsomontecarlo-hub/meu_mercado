@@ -114,6 +114,25 @@ export interface RawReceipt {
   descontos: RawDiscountLine[]
 }
 
+export interface MapeamentoCorredor {
+  categoria: Categoria
+  corredor: string
+}
+
+export interface Mercado {
+  id?: number
+  nome: string
+  corredores: MapeamentoCorredor[]
+}
+
+export interface ItemListaCompras {
+  id?: number
+  descricao: string
+  categoria: Categoria
+  comprado: boolean
+  criado_em: string
+}
+
 export interface ChaveDecomposta {
   chave: string
   valida: boolean
