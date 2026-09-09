@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { useItensComNota, useNotas } from '../lib/useDados'
 import { formatarBRL } from '../lib/money'
 import { formatarDataBR, formatarHoraBR } from '../lib/date'
+import { excluirNota } from '../lib/receiptBuilder'
 import { CATEGORIAS } from '../types'
+import type { Nota } from '../types'
 import { Card, EstadoVazio } from '../components/ui'
 import { baixarCSV, gerarCSV } from '../lib/csvExport'
 
@@ -14,6 +16,8 @@ export function Historico() {
   const [data, setData] = useState('')
   const [loja, setLoja] = useState('')
   const [categoria, setCategoria] = useState('')
+  const [confirmandoId, setConfirmandoId] = useState<number | null>(null)
+  const [excluindoId, setExcluindoId] = useState<number | null>(null)
 
   const lojas = useMemo(() => Array.from(new Set(notas.map((n) => n.nome_loja))).sort(), [notas])
 
@@ -37,6 +41,16 @@ export function Historico() {
     const idsFiltrados = new Set(notasFiltradas.map((n) => n.id))
     const itensFiltrados = itensComNota.filter((x) => idsFiltrados.has(x.nota.id))
     baixarCSV(gerarCSV(itensFiltrados), 'meu-mercado-export.csv')
+  }
+
+  async function excluir(id: number) {
+    setExcluindoId(id)
+    try {
+      await excluirNota(id)
+      setConfirmandoId(null)
+    } finally {
+      setExcluindoId(null)
+    }
   }
 
   return (
@@ -88,24 +102,86 @@ export function Historico() {
       ) : (
         <div className="flex flex-col gap-2">
           {notasFiltradas.map((nota) => (
-            <Link key={nota.id} to={`/nota/${nota.id}`}>
-              <Card className="transition hover:border-emerald-400">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-slate-100">{nota.nome_loja}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {formatarDataBR(nota.data_hora)} às {formatarHoraBR(nota.data_hora)}
-                    </p>
-                  </div>
-                  <p className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                    {formatarBRL(nota.valor_pago_centavos)}
-                  </p>
-                </div>
-              </Card>
-            </Link>
+            <LinhaNota
+              key={nota.id}
+              nota={nota}
+              confirmando={confirmandoId === nota.id}
+              excluindo={excluindoId === nota.id}
+              onPedirExclusao={() => setConfirmandoId(nota.id!)}
+              onCancelarExclusao={() => setConfirmandoId(null)}
+              onConfirmarExclusao={() => excluir(nota.id!)}
+            />
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+function LinhaNota({
+  nota,
+  confirmando,
+  excluindo,
+  onPedirExclusao,
+  onCancelarExclusao,
+  onConfirmarExclusao,
+}: {
+  nota: Nota
+  confirmando: boolean
+  excluindo: boolean
+  onPedirExclusao: () => void
+  onCancelarExclusao: () => void
+  onConfirmarExclusao: () => void
+}) {
+  if (confirmando) {
+    return (
+      <Card className="border-rose-200 dark:border-rose-900">
+        <p className="text-sm text-slate-700 dark:text-slate-300">
+          Excluir a nota de <strong>{nota.nome_loja}</strong> ({formatarBRL(nota.valor_pago_centavos)})? Essa ação
+          não pode ser desfeita.
+        </p>
+        <div className="mt-2 flex gap-2">
+          <button
+            onClick={onConfirmarExclusao}
+            disabled={excluindo}
+            className="flex-1 rounded-lg bg-rose-600 py-2 text-sm font-medium text-white disabled:opacity-40"
+          >
+            {excluindo ? 'Excluindo…' : 'Sim, excluir'}
+          </button>
+          <button
+            onClick={onCancelarExclusao}
+            disabled={excluindo}
+            className="flex-1 rounded-lg border border-slate-300 py-2 text-sm dark:border-slate-700"
+          >
+            Cancelar
+          </button>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="transition hover:border-emerald-400">
+      <div className="flex items-start justify-between gap-2">
+        <Link to={`/nota/${nota.id}`} className="min-w-0 flex-1">
+          <p className="font-medium text-slate-900 dark:text-slate-100">{nota.nome_loja}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {formatarDataBR(nota.data_hora)} às {formatarHoraBR(nota.data_hora)}
+          </p>
+        </Link>
+        <div className="flex shrink-0 items-center gap-3">
+          <Link to={`/nota/${nota.id}`} className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+            {formatarBRL(nota.valor_pago_centavos)}
+          </Link>
+          <button
+            onClick={onPedirExclusao}
+            className="text-rose-400 hover:text-rose-600"
+            aria-label="Excluir nota"
+          >
+            🗑
+          </button>
+        </div>
+      </div>
+    </Card>
   )
 }
