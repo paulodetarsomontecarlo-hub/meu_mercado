@@ -162,7 +162,11 @@ revisão — só a foto e o PDF trazem os itens automaticamente.
   contagem real de itens de cada nota (95/22/8/1) são gerados
   deterministicamente (mesma seed sempre) a partir de um pool de produtos
   comuns de supermercado, já que o texto completo das quatro notas não foi
-  fornecido — ver `src/seed/`.
+  fornecido — ver `src/seed/`. A seed só carrega **uma vez por instalação**:
+  a decisão não é "a tabela de notas está vazia?" (isso faria a seed voltar
+  toda vez que você excluísse tudo) e sim uma marca permanente no
+  `localStorage` (`meu-mercado:seed-carregada`) que nunca é apagada por excluir
+  notas — só limpando os dados do site/navegador ela roda de novo.
 - **Item da lista de compras não tem código de produto** (você digitou o nome
   antes de comprar, não veio de nota nenhuma), então a categoria é um palpite:
   primeiro tenta achar algo parecido no dicionário aprendido pelas notas já
